@@ -125,22 +125,22 @@ class MergeConflict(Exception):
         self.otherChange = otherChange
 
 # Helper functions for buildTStar
-def _star(params, mo):
+def _star(params, minimal_indices):
     newParams = []
     for (node, index) in params:
         if node is not None:
-            newParams.append((node, min(index, mo[node])))
+            newParams.append((node, min(index, minimal_indices[node])))
         else:
             newParams.append((node, 0))
     return tuple(newParams)
 
-def pcsStar(pcs, mo):
+def pcsStar(pcs, minimal_indices):
     # pylint: disable=unbalanced-tuple-unpacking
-    (parent, child, successor) = _star((pcs.parent, pcs.child, pcs.succ), mo)
+    (parent, child, successor) = _star((pcs.parent, pcs.child, pcs.succ), minimal_indices)
     return PCS(parent, child, successor)
 
-def cntStar(cnt, mo):
-    return CNT(_star((cnt.node,), mo)[0], cnt.content)
+def cntStar(cnt, minimal_indices):
+    return CNT(_star((cnt.node,), minimal_indices)[0], cnt.content)
 
 # Converts a raw relational tree representation
 # to a set using class representatives (T*_i)
@@ -256,18 +256,18 @@ def reconstructTree(merged, mergeIndex):
 def merge(root0, root1, root2):
     # convert the trees to the relational
     # representation and create the minimal
-    # indices dictionary mo as a byproduct
-    mo = {}
-    t0 = convertToCPCS(root0, 0, mo)
-    t1 = convertToCPCS(root1, 1, mo)
-    t2 = convertToCPCS(root2, 2, mo)
+    # indices dictionary as a byproduct
+    minimal_indices = {}
+    t0 = convertToCPCS(root0, 0, minimal_indices)
+    t1 = convertToCPCS(root1, 1, minimal_indices)
+    t2 = convertToCPCS(root2, 2, minimal_indices)
 
     # use mo to build the T*_i sets
     # that use class representatives instead
     # of actual nodes
-    t0star = buildTStar(t0, mo)
-    t1star = buildTStar(t1, mo)
-    t2star = buildTStar(t2, mo)
+    t0star = buildTStar(t0, minimal_indices)
+    t1star = buildTStar(t1, minimal_indices)
+    t2star = buildTStar(t2, minimal_indices)
 
     # construct the initial merge (probably inconsistent)
     rawMerge = set()
