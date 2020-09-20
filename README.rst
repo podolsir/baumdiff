@@ -9,6 +9,6 @@ Installation
 
 Simply install the package via pip::
 
-    pip install paramiko
+    pip install baumdiff
 
 There are no dependencies for the library itself.
