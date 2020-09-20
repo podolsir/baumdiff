@@ -19,7 +19,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
-        "License :: OSI Approved :: MIT",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     setup_requires=['setuptools_scm'],
