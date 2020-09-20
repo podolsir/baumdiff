@@ -24,7 +24,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     setup_requires=['setuptools_scm'],
-    install_requires=[],
+    install_requires=['attrs'],
     extras_require={
         'tests': ["pytest", "pytest-cov", "coverage"],
     },

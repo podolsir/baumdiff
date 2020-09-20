@@ -1,3 +1,4 @@
+import attr
 from collections import defaultdict
 
 MARK_NONE = 0
@@ -5,48 +6,19 @@ MARK_REMOVE = 1
 
 # Parent-Child-Successor Relation
 # (relational representation of the tree structure)
-class PCS(object):
-    def __init__(self, parent, child, succ):
-        (self.parent, self.child, self.succ) = (parent, child, succ)
-        self.mark = MARK_NONE
-        self.hash = self.hashCode()
-    def __repr__(self): # pragma: no cover 
-        # This is for internal debugging purposes only, no need to test
-        return "pcs(%s, %s, %s)" % (
-            repr(self.parent), repr(self.child), repr(self.succ))
-    def __eq__(self, other):
-        return (other is not None
-                and other.parent == self.parent
-                and other.child == self.child
-                and other.succ == self.succ)
-    def __hash__(self):
-        return self.hash
-    def hashCode(self):
-        (h, b) = (38743907, 77916165)
-        for i in (self.parent, self.child, self.succ):
-            h = b + h * hash(i)
-        return h
+@attr.s(hash=True, cache_hash=True)
+class PCS:
+    parent = attr.ib(eq=True)
+    child = attr.ib(eq=True)
+    successor = attr.ib(eq=True)
+    mark = attr.ib(default = MARK_NONE, eq=False, init=False, repr=False)
 
 # c(n, 'c') relational (mapping between node ids and values)
-class CNT(object):
-    def __init__(self, node, content):
-        (self.node, self.content) = (node, content)
-        self.mark = MARK_NONE
-        self.hash = self.hashCode()
-    def hashCode(self):
-        (h, b) = (49525371, 44667271)
-        for i in (self.node, self.content):
-            h = b + h * hash(i)
-        return h
-    def __repr__(self):
-        return "c(%s, %s)" % (
-            repr(self.node), repr(self.content))
-    def __eq__(self, other):
-        return (other is not None
-                and other.node == self.node
-                and other.content == self.content)
-    def __hash__(self):
-        return self.hash
+@attr.s(hash=True, cache_hash=True)
+class CNT:
+    node = attr.ib(eq=True)
+    content = attr.ib(eq=True)
+    mark = attr.ib(default = MARK_NONE, eq=False, init=False, repr=False)
 
 class MergeIndex(object):
     # Encapsulates the different LUTs against
@@ -74,7 +46,7 @@ class MergeIndex(object):
     def getOtherRoot(self, change):
         if not isinstance(change, PCS):
             return None
-        return self._get((change.child, change.succ), change, self.parentLUT)
+        return self._get((change.child, change.successor), change, self.parentLUT)
 
     def getOtherSuccessor(self, change):
         if not isinstance(change, PCS):
@@ -84,7 +56,7 @@ class MergeIndex(object):
     def getOtherPredecessor(self, change):
         if not isinstance(change, PCS):
             return None
-        return self._get((change.parent, change.succ), change, self.predLUT)
+        return self._get((change.parent, change.successor), change, self.predLUT)
 
 # core tree -> relational conversion
 def _convertToCPCS(node, index, result):
@@ -136,7 +108,7 @@ def _star(params, minimal_indices):
 
 def pcsStar(pcs, minimal_indices):
     # pylint: disable=unbalanced-tuple-unpacking
-    (parent, child, successor) = _star((pcs.parent, pcs.child, pcs.succ), minimal_indices)
+    (parent, child, successor) = _star((pcs.parent, pcs.child, pcs.successor), minimal_indices)
     return PCS(parent, child, successor)
 
 def cntStar(cnt, minimal_indices):
@@ -166,10 +138,10 @@ def buildLUTs(merged):
         if isinstance(i, CNT):
             cntLUT[i.node].append(i)
         else:
-            predLUT[(i.parent, i.succ)].append(i)
+            predLUT[(i.parent, i.successor)].append(i)
             succLUT[(i.parent, i.child)].append(i)
-            if (i.child[0], i.succ[0]) != (None, None):
-                parentLUT[(i.child, i.succ)].append(i)
+            if (i.child[0], i.successor[0]) != (None, None):
+                parentLUT[(i.child, i.successor)].append(i)
     return (parentLUT, predLUT, succLUT, cntLUT)
 
 
@@ -214,7 +186,7 @@ def reconstructTree(merged, mergeIndex):
         candsucc = mergeIndex.succLUT[root, (None, 0)]
         for i in candsucc: # pragma: no branch; this is never called for leaf nodes
             if i.mark != MARK_REMOVE:
-                succ = i.succ
+                succ = i.successor
                 break
 
         # main loop
@@ -230,7 +202,7 @@ def reconstructTree(merged, mergeIndex):
             candsucc = mergeIndex.succLUT[root, succ]
             for i in candsucc:
                 if i.mark != MARK_REMOVE:
-                    succ = i.succ
+                    succ = i.successor
         return next
 
     # Root kick off:
