@@ -12,6 +12,7 @@ setuptools.setup(
     url="https://github.com/podolsir/baumdiff",
     package_dir={"": "src"},
     classifiers=[
+        "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
