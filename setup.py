@@ -6,6 +6,8 @@ setuptools.setup(
     author="Igor Podolskiy",
     author_email="igor.podolskiy@gmx.de",
     description="Tree Diff and Merge Library",
+    long_description=open("README.rst").read(),
+    long_description_content_type="text/x-rst",
     packages=["baumdiff"],
     url="https://github.com/podolsir/baumdiff",
     package_dir={"": "src"},
