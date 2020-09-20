@@ -135,7 +135,9 @@ def _star(params, mo):
     return tuple(newParams)
 
 def pcsStar(pcs, mo):
-    return PCS(*_star((pcs.parent, pcs.child, pcs.succ), mo))
+    # pylint: disable=unbalanced-tuple-unpacking
+    (parent, child, successor) = _star((pcs.parent, pcs.child, pcs.succ), mo)
+    return PCS(parent, child, successor)
 
 def cntStar(cnt, mo):
     return CNT(_star((cnt.node,), mo)[0], cnt.content)
