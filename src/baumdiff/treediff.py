@@ -205,8 +205,8 @@ class Diff:
         self._reset()
 
         try:
-            newMatching = dict(self.matcher.getMatching(root1, root2))    
-            revMatching = self.matcher.getMatching(root2, root1)
+            newMatching = dict(self.matcher.get_matching(root1, root2))    
+            revMatching = self.matcher.get_matching(root2, root1)
 
             # breadth-first/preorder recursive traversal
             # Align/Insert/Move/Update Phases
@@ -226,7 +226,7 @@ class Diff:
             update([root2], script, 0)
 
             # Delete Phase (depth-first, last-child-first)
-            self._postOrder(root1, self._delete, self.matcher.getMatching(root2, root1), script)
+            self._postOrder(root1, self._delete, self.matcher.get_matching(root2, root1), script)
             
             return script
         finally:

@@ -3,6 +3,7 @@ import pytest
 
 from baumdiff import simpletree as ST
 from baumdiff import treediff
+from baumdiff.matcher import IdMatcher
 
 from ..utils import run_and_check_diff
 
@@ -52,7 +53,7 @@ class TestChawatheDiff:
                 self._progress = 0
             def progress(self, progress):
                 self._progress = progress
-        matcher = ST.Matcher()
+        matcher = IdMatcher()
         pm = PM()
         treediff.edit_script(root1, root2, matcher, pm, usemoves=usemoves)
         assert pm._progress == 4

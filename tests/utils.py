@@ -1,6 +1,7 @@
 from baumdiff import treediff
 from baumdiff import simpletree as ST
 from baumdiff.treeaccess import print_tree
+from baumdiff.matcher import IdMatcher
 from baumdiff.script import DefaultExecutor
 
 def run_and_check_diff(root1, root2, usemoves):
@@ -8,7 +9,7 @@ def run_and_check_diff(root1, root2, usemoves):
         orig1 = root1.clone()
         orig2 = root2.clone()
 
-        matcher = ST.Matcher()
+        matcher = IdMatcher()
         pristine = root1.clone()
         script = treediff.edit_script(root1, root2, matcher, usemoves=usemoves)
         _assertTreeEqual(root1, root2)
