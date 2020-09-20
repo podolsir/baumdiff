@@ -7,7 +7,7 @@ class ShadowNode(Node):
         self.initialized = False
         self.allchildren = []
         self._fixups = []
-        Node.__init__(self, *args)
+        super().__init__(*args)
         self.status = []
         self.initialized = True
 
@@ -20,7 +20,7 @@ class ShadowNode(Node):
     def add(self, t, index = -1, status = 'inserted'):
         if self.initialized and not isinstance(t, ShadowNode):
             t = ShadowNode.convert(t)
-        Node.add(self, t, index)
+        super().add(t, index)
         if index == -1:
             self.allchildren.append(t)
         else:
@@ -29,14 +29,14 @@ class ShadowNode(Node):
             t.status.append(status)
 
     def remove(self, index, status = 'deleted'):
-        Node.remove(self, index)
+        super().remove(index)
         self.allchildren[self._get_fixed_up_index(index)].status.append(status)
         self._add_del_index(index)
 
     def _get_value(self):
-        return Node._get_value(self)
+        return super()._get_value()
     def _set_value(self, value):
-        Node._set_value(self, value)
+        super()._set_value(value)
         self.status.append('updated')
     value = property(_get_value, _set_value)
 
