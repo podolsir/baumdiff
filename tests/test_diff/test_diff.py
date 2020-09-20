@@ -9,7 +9,7 @@ from ..utils import run_and_check_diff
 
 N = ST.Node
 
-class TestChawatheDiff:
+class TestTreeDiff:
     @pytest.mark.parametrize("usemoves", [True, False])
     def test_diff1(self, usemoves):
         root1 = N('R', 'R', 
