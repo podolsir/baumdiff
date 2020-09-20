@@ -1,4 +1,4 @@
 setuptools_scm
 pytest>=4.6
-pytest-cov>=2.10.1
+pytest-cov>=2.8.1
 coverage
