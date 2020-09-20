@@ -1,5 +1,4 @@
 from baumdiff import treediff
-from baumdiff import simpletree as ST
 from baumdiff.treeaccess import print_tree
 from baumdiff.matcher import IdMatcher
 from baumdiff.script import DefaultExecutor
