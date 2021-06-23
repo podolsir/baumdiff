@@ -27,6 +27,9 @@ class ShadowNode(Node):
             self.allchildren.insert(self._get_fixed_up_index(index), t)
         if self.initialized:
             t.status.append(status)
+            for i in range(len(self._fixups)):
+                if index < self._fixups[i]:
+                    self._fixups[i] += 1
 
     def remove(self, index, status = 'deleted'):
         super().remove(index)
