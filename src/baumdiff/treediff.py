@@ -142,14 +142,34 @@ class Diff:
         # otherwise, just return the original path
         return insertPath
 
+    def _subtractPathPrefix(self, path, prefix):
+        while len(prefix) > 0:
+            if path[0] == prefix[0]:
+                path = path[1:]
+                prefix = prefix[1:]
+            else:
+                break
+        return path
+
     def _getMove(self, node, targetParentPath, pos, usemoves):
         if usemoves:
             return (MoveOp(self.path_getter(node), targetParentPath, pos),)
         else:
-            insertNode = self.clone_func(node, True)
-            deletedNodePath = self.path_getter(node) 
-            return (DeleteOp(deletedNodePath),
-                    InsertOp(self._pathFixup(deletedNodePath, targetParentPath), insertNode, pos))
+            insertNode = self.clone_func(node, False)
+            deletedNodePath = self.path_getter(node)
+            newRootPath = self._pathFixup(deletedNodePath, targetParentPath)
+
+            inserts = []
+            deletes = []
+            
+            def _d(node):
+                pathSuffix = self._subtractPathPrefix(self.path_getter(node), deletedNodePath)
+                assert(len(pathSuffix) > 0)
+                deletes.append(DeleteOp(self.path_getter(node)))
+                inserts.insert(0, InsertOp(newRootPath + [pos] + pathSuffix[:-1], self.clone_func(node, False), pathSuffix[-1]))
+                
+            self._postOrder(node, _d)
+            return deletes + [DeleteOp(deletedNodePath), InsertOp(newRootPath, insertNode, pos)] + inserts
         
     def _core(self, root2, newMatching, revMatching, script, usemoves):
         partnerParent = newMatching[root2]
