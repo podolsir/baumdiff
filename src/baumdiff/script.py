@@ -10,10 +10,11 @@ class InsertOp(object):
 
 class DeleteOp(object):
     type = 'DEL'
-    def __init__(self, path):
+    def __init__(self, path, deleted_id):
         self.path = path
+        self.deleted_id = deleted_id
     def __repr__(self):
-        return "Delete %s" % (self.path)
+        return "Delete %s (%s)" % (self.path, self.deleted_id)
 
 class UpdateOp(object):
     type = 'UPD'
@@ -62,7 +63,7 @@ class _ExecutorBase(object):
     
 class DefaultExecutor(_ExecutorBase):
     def __init__(self, tree_adapter=None, parent_getter=None, child_seq_func=None, value_setter=None,
-        child_add_func=None, child_remove_func=None):
+        child_add_func=None, child_remove_func=None, id_getter=None):
         
         _ExecutorBase.__init__(self)
         tree_adapter = tree_adapter or DefaultTreeAdapter()
@@ -71,6 +72,7 @@ class DefaultExecutor(_ExecutorBase):
         self.child_add_func = child_add_func or tree_adapter.add_child
         self.child_remove_func = child_remove_func or tree_adapter.remove_child
         self.child_seq_func = child_seq_func or tree_adapter.child_sequence
+        self.id_getter = id_getter or tree_adapter.get_id
  
     def handleMove(self, op, tree):
         node = descend(tree, op.path, child_seq_func =  self.child_seq_func)
@@ -92,4 +94,7 @@ class DefaultExecutor(_ExecutorBase):
 
     def handleDelete(self, op, tree):
         parent = descend(tree, op.path[0:-1], child_seq_func = self.child_seq_func)
+        assert(len(self.child_seq_func(parent)[op.path[-1]]) == 0)
+        assert(op.deleted_id == self.id_getter(self.child_seq_func(parent)[op.path[-1]])), \
+            f"{op.deleted_id} != {self.id_getter(self.child_seq_func(parent)[op.path[-1]])}"
         self.child_remove_func(parent, op.path[-1])

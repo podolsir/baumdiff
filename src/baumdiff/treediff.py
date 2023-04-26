@@ -1,6 +1,9 @@
 import difflib
 from .treeaccess import DefaultTreeAdapter
 from .script import InsertOp, MoveOp, DeleteOp, UpdateOp
+from collections import namedtuple
+
+MoveResult = namedtuple('MoveResult', ('ops', 'fixedPos'))
 
 class NullProgressMonitor(object):
     def __init__(self):
@@ -17,7 +20,8 @@ class Diff:
         child_add_func=None,
         child_remove_func=None,
         child_seq_func=None,
-        clone_func=None):
+        clone_func=None,
+        id_getter=None):
 
         tree_adapter = tree_adapter or DefaultTreeAdapter()
         self.progress_monitor = progress_monitor or NullProgressMonitor()
@@ -31,6 +35,7 @@ class Diff:
         self.child_remove_func = child_remove_func or tree_adapter.remove_child
         self.child_seq_func = child_seq_func or tree_adapter.child_sequence
         self.clone_func = clone_func or tree_adapter.clone_node
+        self.id_getter = id_getter or tree_adapter.get_id
 
         self.matcher = matcher
 
@@ -108,15 +113,18 @@ class Diff:
         for a in toMove:
             b = matching[a]
             newPos = self._findPos(b, node1)
-            script.extend(self._getMove(a, self.path_getter(node1), newPos, usemoves))
-            move(node1, a, newPos)
+            mr = self._getMove(a, self.path_getter(node1), newPos, usemoves)
+            script.extend(mr.ops)
+            move(node1, a, mr.fixedPos)
             self._mark(a, b)
         return
 
     def _delete(self, root, revMatching, script):
         if revMatching[root] is None:
-            script.append(DeleteOp(self.path_getter(root)))
+            op = DeleteOp(self.path_getter(root), self.id_getter(root))
+            script.append(op)
             parent = self.parent_getter(root)
+            assert(len(root.children) == 0)
             self.child_remove_func(parent, self.index_getter(parent, root))
         return [revMatching, script]
 
@@ -151,9 +159,10 @@ class Diff:
                 break
         return path
 
-    def _getMove(self, node, targetParentPath, pos, usemoves):
+    def _getMove(self, node, targetParentPath, pos, usemoves) -> MoveResult:
         if usemoves:
-            return (MoveOp(self.path_getter(node), targetParentPath, pos),)
+            raise NotImplementedError
+            # return MoveResult([MoveOp(self.path_getter(node), targetParentPath, pos)], pos)
         else:
             insertNode = self.clone_func(node, False)
             deletedNodePath = self.path_getter(node)
@@ -162,14 +171,20 @@ class Diff:
             inserts = []
             deletes = []
             
+            if deletedNodePath[:-1] == newRootPath and deletedNodePath[-1] < pos:
+                pos -= 1
+
             def _d(node):
                 pathSuffix = self._subtractPathPrefix(self.path_getter(node), deletedNodePath)
                 assert(len(pathSuffix) > 0)
-                deletes.append(DeleteOp(self.path_getter(node)))
+                delete_op = DeleteOp(self.path_getter(node), self.id_getter(node))
+                deletes.append(delete_op)
                 inserts.insert(0, InsertOp(newRootPath + [pos] + pathSuffix[:-1], self.clone_func(node, False), pathSuffix[-1]))
-                
+
             self._postOrder(node, _d)
-            return deletes + [DeleteOp(deletedNodePath), InsertOp(newRootPath, insertNode, pos)] + inserts
+            delete_op = DeleteOp(deletedNodePath, self.id_getter(node))
+
+            return MoveResult(deletes + [delete_op, InsertOp(newRootPath, insertNode, pos)] + inserts, pos)
         
     def _core(self, root2, newMatching, revMatching, script, usemoves):
         partnerParent = newMatching[root2]
@@ -210,10 +225,11 @@ class Diff:
                     self._mark(node1, node2)
                     
                     # do the move
-                    script.extend(self._getMove(node1, self.path_getter(partnerParent), newPos, usemoves))
+                    mr = self._getMove(node1, self.path_getter(partnerParent), newPos, usemoves)
+                    script.extend(mr.ops)
                     parent1 = self.parent_getter(node1)
                     self.child_remove_func(parent1, self.index_getter(parent1, node1))
-                    self.child_add_func(partnerParent, node1, newPos)
+                    self.child_add_func(partnerParent, node1, mr.fixedPos)
 
                 # Update Phase
                 v1, v2 = self.value_getter(node1), self.value_getter(node2)

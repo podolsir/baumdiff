@@ -12,6 +12,9 @@ class ShadowNode(Node):
         self.initialized = True
 
     def _add_del_index(self, index):
+        for i in range(len(self._fixups)):
+            if index < self._fixups[i]:
+                self._fixups[i] -= 1
         bisect.insort(self._fixups, index)
 
     def _get_fixed_up_index(self, index):
@@ -32,8 +35,9 @@ class ShadowNode(Node):
                     self._fixups[i] += 1
 
     def remove(self, index, status = 'deleted'):
+        assert(self.children[index].id == self.allchildren[self._get_fixed_up_index(index)].id)
         super().remove(index)
-        self.allchildren[self._get_fixed_up_index(index)].status.append(status)
+        self.allchildren[self._get_fixed_up_index(index)].status = ['deleted']
         self._add_del_index(index)
 
     def _get_value(self):
