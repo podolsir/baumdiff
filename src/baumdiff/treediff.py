@@ -139,7 +139,7 @@ class Diff:
                 # the deleted node is in a region of a tree which cannot affect
                 # the insert path, break off and return the original one
                 return insertPath
-            newInsertPath.append(insertPath)
+            newInsertPath.append(insertPath[i])
         pathIndex = len(deletePath) - 1
         if deletePath[pathIndex] < insertPath[pathIndex]:
             # the deletion affects the insert path 
